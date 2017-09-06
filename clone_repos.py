@@ -8,8 +8,8 @@ reload(students)
 
 
 
-DEVWD='/home/bsb/rossc/assignments'
-
+#DEVWD='/home/bsb/rossc/assignments'
+DEVWD='./assign_workingcopies'
 #for REPO in "${REPOS[@]}"
 
 for s in students.STUDS:

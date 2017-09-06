@@ -63,6 +63,7 @@ def checkFiles(repo,flist):
         logging.warn("Only %d of %d files/directories exist"%(yes,yes+no))
     else:
         logging.info("Success: All %d of %d files/directories exist"%(yes,yes+no))
+    return (yes,no)
 
 def checkAllFiles(repo,flist):
     allthere = True
