@@ -28,6 +28,11 @@ cd "${GRADING}"
 cd "${RESULTS}"
 git add ./a4/*.*
 
+cd "${GRADING}"
+./a5_eval.py
+cd "${RESULTS}"
+git add ./a5/*.*
+
 
 # Commit and push
 cd "${RESULTS}"
