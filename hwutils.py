@@ -33,6 +33,28 @@ def callCmd(cmd):
     if err is not None:
         logging.error("stderr: %s"%err)
 
+def testTextStrings(fname,teststrs):
+    '''
+    Given the filename and a list of strings, seach the file to see if ALL
+    the strings are present on a given line
+    '''
+    logging.info("Testing file <%s> for the occurance of all of the following strings on a single line:"%fname)
+    logging.info("\t"+str(teststrs))
+    try:
+        f = open(fname)
+    except IOError:
+        logging.error("Can't open file!")
+        return False
+    result = False
+    for line in f:
+        tests = []
+        for t in teststrs:
+            tests.append(t in line)
+        if all(tests):
+            result = True
+    logging.info("Result of search - %s"%str(result))
+    return result 
+
 def catFile(fpath):
     # Contents of file to logger
     logging.info("Contents of <%s>"%fpath)

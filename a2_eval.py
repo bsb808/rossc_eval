@@ -12,7 +12,7 @@ import hwutils
 reload(hwutils)
 
 global REPONAME, HW
-HW='a1'
+HW='a2'
 REPONAME='rossc_%s'%HW
 
 # Where to put the results
@@ -69,82 +69,27 @@ for s in  students.STUDS:
     failures = 0
 
     if test:
+        successes+=1
         logging.info("Contents of repository:")
         ds,fs = hwutils.walk(repo)
         hwutils.callCmd('tree %s'%repo)
 
         logging.info("")
-        logging.info("Assignment: Introduction to Linux and Git")
-        flist = ['sandbox','sandbox/dir1','sandbox/dir1/file1.txt',
-                 'sandbox/dir2','sandbox/dir2/file2.txt','sandbox/commands.txt']
-        y,n = hwutils.checkFiles(repo,flist)
-        successes += y
-        failures += n
-        hwutils.catFiles(repo,['sandbox/commands.txt'])
-
-        logging.info("")
-        flist = ['playpen','playpen/folder1','playpen/folder1/file1.txt',
-                 'playpen/folder2','playpen/folder2/file2.txt','playpen/play.txt']
+        logging.info("Assignment: Create a ROS Package and Driving a USV.")
+        logging.info("Exercise: Setup Git repository and make it a ROS package")
+        flist = ['CMakeLists.txt','package.xml']
         y,n = hwutils.checkFiles(repo,flist)
         successes += y
         failures += n
 
         logging.info("")
-        logging.info("Assignment: Piloting a Turtle")
-        flist = ['scripts/turtleletter.sh']
+        logging.info("Exercise: Gazebo USV Driving a Box")
+        flist = ['scripts/usv_box.sh']
         y,n = hwutils.checkFiles(repo,flist)
         successes += y
         failures += n
         hwutils.catFiles(repo,flist)
 
-        # Get a screen capture of turtle results
-        if 0: #y > 0:
-            logging.info("Attempting to run bash script <%s>"%flist[0])
-            outf = os.path.join(hwdir,HW,'turtleletter_%s.png'%s)
-            logging.info("Saving resulting image as <%s>"%outf)
-            rcore = subprocess.Popen('roscore', shell=True, 
-                                     stderr=subprocess.STDOUT,
-                                     preexec_fn=os.setsid)
-            time.sleep(2.0)
-            tsim = subprocess.Popen(['rosrun turtlesim turtlesim_node'],
-                                      shell=True, stderr=subprocess.STDOUT,
-                                    preexec_fn=os.setsid)
-            time.sleep(1.0)
-            SDIR = os.path.join(repo,'scripts')
-            proc = subprocess.Popen(['bash','turtleletter.sh'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    preexec_fn=os.setsid,
-                                    cwd=SDIR)
-            (out,err) = proc.communicate()
-            print "out: ",out
-            print "err: ",err
-
-            proc = subprocess.Popen(['gnome-screenshot','-w','-f',outf],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    cwd=os.path.join(hwdir,HW))
-            (out,err) = proc.communicate()
-            print "out: ",out
-            print "err: ",err
-            
-            time.sleep(1)
-            try:
-                os.killpg(os.getpgid(tsim.pid),signal.SIGTERM)
-            except:
-                pass
-            try:
-                tsim.terminate()
-            except:
-                pass
-            try:
-                os.killpg(os.getpgid(rcore.pid),signal.SIGTERM)
-            except:
-                pass
-            try: 
-                rcore.terminate()
-            except:
-                pass
     else:
         logging.info("Terminating testing - can't test without the repository")
         failures += 1
@@ -159,17 +104,17 @@ for s in  students.STUDS:
     else:
         logging.warn(msg)
 
-    summary[s] = [successes,failures]
-
     logging.info("****************END*********************")
     logging.info("End of testing for <%s>"%HW)
     #logging.shutdown()
+
+    summary[s] = [successes,failures]
 
     logger.removeHandler(fileh)
 
 # Write summary log file
 sumfile = os.path.join(hwdir,HW,'summary.log')
-sumf = open(sumfile,'w')
+sumf = open(sumfile,'wa')
 msg = "User, \tSuccesses, \tFailures\n"
 sumf.write(msg)
 for k in summary.keys():

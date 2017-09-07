@@ -18,7 +18,7 @@ for s in students.STUDS:
     if not os.path.exists(DIR):
         print("Missing student directory for <%s> - making it"%s)
         os.makedirs(DIR)
-    NN=2
+    NN=6
     for N in range(1,NN):
 	R="rossc_a%d"%N
 	DIRR=os.path.join(DIR,R)

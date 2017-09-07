@@ -12,10 +12,28 @@ cd "${GRADING}"
 cd "${RESULTS}"
 git add ./a1/*.*
 
+
+cd "${GRADING}"
+./a2_eval.py
+cd "${RESULTS}"
+git add ./a2/*.*
+
+cd "${GRADING}"
+./a3_eval.py
+cd "${RESULTS}"
+git add ./a3/*.*
+
+cd "${GRADING}"
+./a4_eval.py
+cd "${RESULTS}"
+git add ./a4/*.*
+
+
 # Commit and push
 cd "${RESULTS}"
 NOW=`date +%Y.%m.%d-%H:%M:%S`
-echo ${NOW}
-git status
-git commit -a -m ${NOW}
+cmsg="Latest auto commit: ${NOW}"
+echo $cmsg
+#git status
+git commit -a -m "${cmsg}"
 git push origin master

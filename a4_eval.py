@@ -12,7 +12,7 @@ import hwutils
 reload(hwutils)
 
 global REPONAME, HW
-HW='a1'
+HW='a4'
 REPONAME='rossc_%s'%HW
 
 # Where to put the results
@@ -69,82 +69,42 @@ for s in  students.STUDS:
     failures = 0
 
     if test:
+        successes += 1
+        ilist_all = []  # master list of all required images
         logging.info("Contents of repository:")
         ds,fs = hwutils.walk(repo)
         hwutils.callCmd('tree %s'%repo)
 
         logging.info("")
-        logging.info("Assignment: Introduction to Linux and Git")
-        flist = ['sandbox','sandbox/dir1','sandbox/dir1/file1.txt',
-                 'sandbox/dir2','sandbox/dir2/file2.txt','sandbox/commands.txt']
-        y,n = hwutils.checkFiles(repo,flist)
-        successes += y
-        failures += n
-        hwutils.catFiles(repo,['sandbox/commands.txt'])
-
-        logging.info("")
-        flist = ['playpen','playpen/folder1','playpen/folder1/file1.txt',
-                 'playpen/folder2','playpen/folder2/file2.txt','playpen/play.txt']
+        logging.info("Assignment: ROS plumbing - connecting nodes via topics")
+        logging.info("Exercise: Setup Git repository and make it a ROS package")
+        flist = ['package.xml','CMakeLists.txt']
         y,n = hwutils.checkFiles(repo,flist)
         successes += y
         failures += n
 
-        logging.info("")
-        logging.info("Assignment: Piloting a Turtle")
-        flist = ['scripts/turtleletter.sh']
-        y,n = hwutils.checkFiles(repo,flist)
+
+        logging.info("Exercise: Plumbing the system")
+        flist = ['launch/course_control.launch']
+        ilist = ['images/rosgraph.png']
+        y,n = hwutils.checkFiles(repo,flist+ilist)
         successes += y
         failures += n
-        hwutils.catFiles(repo,flist)
 
-        # Get a screen capture of turtle results
-        if 0: #y > 0:
-            logging.info("Attempting to run bash script <%s>"%flist[0])
-            outf = os.path.join(hwdir,HW,'turtleletter_%s.png'%s)
-            logging.info("Saving resulting image as <%s>"%outf)
-            rcore = subprocess.Popen('roscore', shell=True, 
-                                     stderr=subprocess.STDOUT,
-                                     preexec_fn=os.setsid)
-            time.sleep(2.0)
-            tsim = subprocess.Popen(['rosrun turtlesim turtlesim_node'],
-                                      shell=True, stderr=subprocess.STDOUT,
-                                    preexec_fn=os.setsid)
-            time.sleep(1.0)
-            SDIR = os.path.join(repo,'scripts')
-            proc = subprocess.Popen(['bash','turtleletter.sh'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    preexec_fn=os.setsid,
-                                    cwd=SDIR)
-            (out,err) = proc.communicate()
-            print "out: ",out
-            print "err: ",err
+        fname = os.path.join(repo,flist[0])
+        tstrs = [ ['remap','odometry/nav','nav_odom'],
+                  ['remap','cmd_course','cmd_vel'],
+                  ['remap','cmd_drive','cmd_drive']]
+        for ts in tstrs:
+            if hwutils.testTextStrings(fname,ts):
+                successes += 1
+            else: 
+                failures += 1
 
-            proc = subprocess.Popen(['gnome-screenshot','-w','-f',outf],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    cwd=os.path.join(hwdir,HW))
-            (out,err) = proc.communicate()
-            print "out: ",out
-            print "err: ",err
+        pdffile = os.path.join(hwdir,HW,'%s_%s_images.pdf'%(HW,s))
+        hwutils.images2pdf(repo,ilist,pdffile)
+
             
-            time.sleep(1)
-            try:
-                os.killpg(os.getpgid(tsim.pid),signal.SIGTERM)
-            except:
-                pass
-            try:
-                tsim.terminate()
-            except:
-                pass
-            try:
-                os.killpg(os.getpgid(rcore.pid),signal.SIGTERM)
-            except:
-                pass
-            try: 
-                rcore.terminate()
-            except:
-                pass
     else:
         logging.info("Terminating testing - can't test without the repository")
         failures += 1
@@ -159,11 +119,11 @@ for s in  students.STUDS:
     else:
         logging.warn(msg)
 
-    summary[s] = [successes,failures]
-
     logging.info("****************END*********************")
     logging.info("End of testing for <%s>"%HW)
     #logging.shutdown()
+
+    summary[s] = [successes,failures]
 
     logger.removeHandler(fileh)
 

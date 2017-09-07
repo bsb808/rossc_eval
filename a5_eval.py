@@ -4,7 +4,7 @@ import logging
 import subprocess
 import time
 import signal
-
+import numpy as np
 # local
 import students
 reload(students)
@@ -12,7 +12,7 @@ import hwutils
 reload(hwutils)
 
 global REPONAME, HW
-HW='a1'
+HW='a5'
 REPONAME='rossc_%s'%HW
 
 # Where to put the results
@@ -67,84 +67,66 @@ for s in  students.STUDS:
 
     successes = 0
     failures = 0
-
+    besttime = None
+        
     if test:
+        successes += 1
+        ilist_all = []  # master list of all required images
         logging.info("Contents of repository:")
         ds,fs = hwutils.walk(repo)
         hwutils.callCmd('tree %s'%repo)
 
         logging.info("")
-        logging.info("Assignment: Introduction to Linux and Git")
-        flist = ['sandbox','sandbox/dir1','sandbox/dir1/file1.txt',
-                 'sandbox/dir2','sandbox/dir2/file2.txt','sandbox/commands.txt']
-        y,n = hwutils.checkFiles(repo,flist)
-        successes += y
-        failures += n
-        hwutils.catFiles(repo,['sandbox/commands.txt'])
-
-        logging.info("")
-        flist = ['playpen','playpen/folder1','playpen/folder1/file1.txt',
-                 'playpen/folder2','playpen/folder2/file2.txt','playpen/play.txt']
+        logging.info("Assignment: Design Project")
+        flist = ['package.xml','CMakeLists.txt']
         y,n = hwutils.checkFiles(repo,flist)
         successes += y
         failures += n
 
-        logging.info("")
-        logging.info("Assignment: Piloting a Turtle")
-        flist = ['scripts/turtleletter.sh']
+        flist = ['scripts/go.sh']
         y,n = hwutils.checkFiles(repo,flist)
         successes += y
         failures += n
-        hwutils.catFiles(repo,flist)
+        hwutils.catFiles(repo,['scripts/go.sh'])
 
-        # Get a screen capture of turtle results
-        if 0: #y > 0:
-            logging.info("Attempting to run bash script <%s>"%flist[0])
-            outf = os.path.join(hwdir,HW,'turtleletter_%s.png'%s)
-            logging.info("Saving resulting image as <%s>"%outf)
-            rcore = subprocess.Popen('roscore', shell=True, 
-                                     stderr=subprocess.STDOUT,
-                                     preexec_fn=os.setsid)
-            time.sleep(2.0)
-            tsim = subprocess.Popen(['rosrun turtlesim turtlesim_node'],
-                                      shell=True, stderr=subprocess.STDOUT,
-                                    preexec_fn=os.setsid)
-            time.sleep(1.0)
-            SDIR = os.path.join(repo,'scripts')
-            proc = subprocess.Popen(['bash','turtleletter.sh'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    preexec_fn=os.setsid,
-                                    cwd=SDIR)
-            (out,err) = proc.communicate()
+        flist = ['timer.bag']
+        y,n = hwutils.checkFiles(repo,flist)
+        successes += y
+        failures += n
+        
+        if y:
+            p=subprocess.Popen(['rostopic','echo','-b','timer.bag','etime'],
+                               stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE,
+                               cwd=repo)
+            (out,err) = p.communicate()
             print "out: ",out
             print "err: ",err
 
-            proc = subprocess.Popen(['gnome-screenshot','-w','-f',outf],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE,
-                                    cwd=os.path.join(hwdir,HW))
-            (out,err) = proc.communicate()
-            print "out: ",out
-            print "err: ",err
+            # Parse output of rostopic echo
+            times = []
+            print out.split()
+            for sp in out.split():
+                try:
+                    aa = float(sp)
+                    times.append(aa)
+                except:
+                    pass
+
+            if len(times)>0:
+                logging.info("Sucessfully found speed test times in timer.bag")
+                successes+=1
+                logging.info("\tRecorded Times: %s"%str(times))
+                besttime = max(np.array(times))
+                logging.info("\tBest time = %.3f s"%besttime)
+            else:
+                logging.error("No official time found in timer.bag!")
+                failures+=1
+
+
+
+        
             
-            time.sleep(1)
-            try:
-                os.killpg(os.getpgid(tsim.pid),signal.SIGTERM)
-            except:
-                pass
-            try:
-                tsim.terminate()
-            except:
-                pass
-            try:
-                os.killpg(os.getpgid(rcore.pid),signal.SIGTERM)
-            except:
-                pass
-            try: 
-                rcore.terminate()
-            except:
-                pass
     else:
         logging.info("Terminating testing - can't test without the repository")
         failures += 1
@@ -159,21 +141,21 @@ for s in  students.STUDS:
     else:
         logging.warn(msg)
 
-    summary[s] = [successes,failures]
-
     logging.info("****************END*********************")
     logging.info("End of testing for <%s>"%HW)
     #logging.shutdown()
+
+    summary[s] = [successes,failures,besttime]
 
     logger.removeHandler(fileh)
 
 # Write summary log file
 sumfile = os.path.join(hwdir,HW,'summary.log')
 sumf = open(sumfile,'w')
-msg = "User, \tSuccesses, \tFailures\n"
+msg = "User, \tSuccesses, \tFailures\tBestTime [s]\n"
 sumf.write(msg)
 for k in summary.keys():
     sf = summary[k]
-    msg = "%s, \t%d, \t%d\n"%(k,sf[0],sf[1])
+    msg = "%s, \t%d, \t%d\t%s\n"%(k,sf[0],sf[1],str(sf[2]))
     sumf.write(msg)
 sumf.close()
